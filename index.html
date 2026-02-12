@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Will You Be My Valentine? ❤️ - Sarp & Elvin</title>
-    <script src="chats.js"></script>
     <style>
         * {
             margin: 0;
@@ -126,11 +125,30 @@
             font-weight: bold;
         }
         
+        .upload-section {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .upload-btn {
+            background: #ff4d6d;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
         .chat-container {
             background: #f9f9f9;
             border-radius: 15px;
             padding: 20px;
-            height: 600px;
+            height: 500px;
             display: flex;
             flex-direction: column;
         }
@@ -212,22 +230,6 @@
             color: white;
         }
         
-        .filter-btn:hover {
-            background: #ff4d6d;
-            color: white;
-        }
-        
-        .love-quote {
-            background: #ffe6e9;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-style: italic;
-            color: #ff4d6d;
-            text-align: center;
-            font-size: 1.1rem;
-        }
-        
         @keyframes floatUp {
             0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
             100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
@@ -239,7 +241,6 @@
             .question { font-size: 1.5rem; }
             .btn { padding: 12px 30px; font-size: 1.2rem; }
             .lock-overlay { font-size: 1.2rem; padding: 20px; }
-            .chat-message { max-width: 100%; }
         }
     </style>
 </head>
@@ -260,21 +261,28 @@
         
         <div id="lockedContent" class="locked-content">
             <div id="lockOverlay" class="lock-overlay">
-                💕 Say YES to see our 2,500+ messages! 💕
+                💕 Say YES to upload your chats! 💕
+            </div>
+            
+            <div class="upload-section">
+                <p style="margin-bottom: 10px; color: #333; font-size: 1.1rem;">📁 Upload your chat history (TXT file)</p>
+                <input type="file" id="chatFile" accept=".txt" style="display: none;">
+                <button class="upload-btn" onclick="document.getElementById('chatFile').click()">Choose TXT File</button>
+                <p id="fileName" style="margin-top: 10px; color: #666; font-size: 0.9rem;">No file selected</p>
             </div>
             
             <div class="chat-container">
-                <div id="chatStats" class="chat-stats">📊 Loading chat statistics...</div>
+                <div id="chatStats" class="chat-stats">📊 Upload a TXT file to see stats</div>
                 
                 <div class="chat-filter">
-                    <button class="filter-btn active" onclick="filterChats('all')">💬 ALL MESSAGES</button>
+                    <button class="filter-btn active" onclick="filterChats('all')">💬 ALL</button>
                     <button class="filter-btn" onclick="filterChats('Elvin')">💗 ELVIN</button>
                     <button class="filter-btn" onclick="filterChats('Sarp')">💙 SARP</button>
                     <button class="filter-btn" onclick="filterChats('love')">❤️ LOVE</button>
                 </div>
                 
                 <div id="chatMessages" class="chat-messages">
-                    💕 Say YES to unlock all our conversations! 💕
+                    💕 Upload your chat history TXT file to see messages! 💕
                 </div>
             </div>
         </div>
@@ -285,21 +293,61 @@
         let isUnlocked = false;
         let noClickCount = 0;
         let currentFilter = 'all';
-        
-        if (typeof window.chatHistory !== 'undefined' && window.chatHistory.length > 0) {
-            chatHistory = window.chatHistory;
+
+        document.getElementById('chatFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').innerHTML = '📄 ' + file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseChatFile(content);
+            };
+            reader.readAsText(file);
+        });
+
+        function parseChatFile(content) {
+            const lines = content.split('\n');
+            chatHistory = [];
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                
+                const match = line.match(/\[(.*?)\]\s+([^:]+):\s+(.+)/);
+                if (match) {
+                    let time = match[1];
+                    let sender = match[2].trim();
+                    let text = match[3].trim();
+                    let type = sender.includes('Sarp') ? 'sent' : 'received';
+                    
+                    if (sender.includes('Sarp') || sender.includes('мой мëд')) {
+                        sender = 'Sarp';
+                        type = 'sent';
+                    } else if (sender.includes('Elvin')) {
+                        sender = 'Elvin';
+                        type = 'received';
+                    } else {
+                        return;
+                    }
+                    
+                    chatHistory.push({
+                        sender: sender,
+                        text: text,
+                        time: time,
+                        type: type
+                    });
+                }
+            });
+            
+            if (isUnlocked) {
+                updateChatStats();
+                loadChats();
+            }
+            
             console.log('✅ Loaded', chatHistory.length, 'messages');
-        } else {
-            console.error('❌ chats.js not loaded');
-            chatHistory = [
-                { sender: "Elvin", text: "Will you be my Valentine? ❤️", time: "2025-03-02 19:52", type: "received" },
-                { sender: "Sarp", text: "Doesnt look like it😔", time: "2025-03-03 01:42", type: "sent" },
-                { sender: "Sarp", text: "I love you so much that if every bit of love was 1 gram you'd be crushed by infinity", time: "2025-07-04 23:45", type: "sent" },
-                { sender: "Elvin", text: "I love you more ❤️", time: "2025-07-04 23:46", type: "received" },
-                { sender: "Elvin", text: "You're my first real love and my last", time: "2025-07-05 00:01", type: "received" },
-                { sender: "Sarp", text: "I miss you so much", time: "2025-07-06 01:23", type: "sent" },
-                { sender: "Elvin", text: "I miss you too baby 💕", time: "2025-07-06 01:25", type: "received" }
-            ];
         }
 
         function sayYes() {
@@ -309,11 +357,13 @@
             document.getElementById('lockedContent').classList.add('unlocked');
             
             document.getElementById('questionText').innerHTML = 'YAY! You said YES! ❤️❤️❤️';
-            document.getElementById('message').innerHTML = '3 months, ' + chatHistory.length + ' messages, and now this... You make me the happiest person ever! 🥰';
+            document.getElementById('message').innerHTML = 'Now upload your chat history TXT file! 💕';
             document.getElementById('noBtn').style.display = 'none';
             
-            updateChatStats();
-            loadChats();
+            if (chatHistory.length > 0) {
+                updateChatStats();
+                loadChats();
+            }
             
             for(let i = 0; i < 50; i++) setTimeout(createHeart, i * 20);
         }
@@ -333,7 +383,7 @@
         }
         
         function loadChats() {
-            if (!isUnlocked) return;
+            if (!isUnlocked || chatHistory.length === 0) return;
             
             const container = document.getElementById('chatMessages');
             container.innerHTML = '';
@@ -353,10 +403,9 @@
                     c.text.includes('love') || 
                     c.text.includes('sevi') || 
                     c.text.includes('aşk') ||
-                    c.text.includes('miss you') ||
+                    c.text.includes('miss') ||
                     c.text.includes('özledim') ||
-                    c.text.includes('sarıl') ||
-                    c.text.includes('hug')
+                    c.text.includes('sarıl')
                 );
             }
             
@@ -365,13 +414,11 @@
                 return;
             }
             
-            filtered.reverse().forEach(msg => {
+            filtered.slice(-200).reverse().forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `chat-message ${msg.type === 'sent' ? 'sent' : ''}`;
                 
-                let senderName = msg.sender;
-                if (msg.sender === 'Sarp') senderName = 'Sarp 💙';
-                if (msg.sender === 'Elvin') senderName = 'Elvin 💗';
+                let senderName = msg.sender === 'Sarp' ? 'Sarp 💙' : 'Elvin 💗';
                 
                 div.innerHTML = `
                     <div class="sender">${senderName}</div>
@@ -380,8 +427,6 @@
                 `;
                 container.appendChild(div);
             });
-            
-            container.scrollTop = container.scrollHeight;
         }
         
         function filterChats(filter) {
@@ -399,50 +444,33 @@
         }
         
         function updateChatStats() {
+            if (chatHistory.length === 0) {
+                document.getElementById('chatStats').innerHTML = '📊 Upload a TXT file to see stats';
+                return;
+            }
+            
             const totalMsgs = chatHistory.length;
             const elvinMsgs = chatHistory.filter(c => c.sender === 'Elvin').length;
             const sarpMsgs = chatHistory.filter(c => c.sender === 'Sarp').length;
             const loveMsgs = chatHistory.filter(c => 
-                c.text.includes('❤️') || 
-                c.text.includes('💕') || 
-                c.text.includes('love') || 
-                c.text.includes('sevi') || 
-                c.text.includes('aşk')
+                c.text.includes('❤️') || c.text.includes('💕') || c.text.includes('love') || c.text.includes('sevi')
             ).length;
             
             let statsHtml = '';
             
             if (currentFilter === 'all') {
                 statsHtml = `
-                    <span>💬 TOTAL: ${totalMsgs} messages</span>
+                    <span>💬 TOTAL: ${totalMsgs}</span>
                     <span>💗 ELVIN: ${elvinMsgs}</span>
                     <span>💙 SARP: ${sarpMsgs}</span>
                     <span>❤️ LOVE: ${loveMsgs}</span>
-                    <span>📅 SINCE: March 2025</span>
                 `;
             } else if (currentFilter === 'Elvin') {
-                statsHtml = `
-                    <span>💗 ELVIN: ${elvinMsgs} messages</span>
-                    <span>❤️ LOVE: ${chatHistory.filter(c => c.sender === 'Elvin' && 
-                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
-                    <span>📅 SINCE: March 2025</span>
-                `;
+                statsHtml = `<span>💗 ELVIN: ${elvinMsgs} messages</span>`;
             } else if (currentFilter === 'Sarp') {
-                statsHtml = `
-                    <span>💙 SARP: ${sarpMsgs} messages</span>
-                    <span>❤️ LOVE: ${chatHistory.filter(c => c.sender === 'Sarp' && 
-                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
-                    <span>📅 SINCE: March 2025</span>
-                `;
+                statsHtml = `<span>💙 SARP: ${sarpMsgs} messages</span>`;
             } else if (currentFilter === 'love') {
-                statsHtml = `
-                    <span>❤️ LOVE MESSAGES: ${loveMsgs}</span>
-                    <span>💗 Elvin: ${chatHistory.filter(c => c.sender === 'Elvin' && 
-                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
-                    <span>💙 Sarp: ${chatHistory.filter(c => c.sender === 'Sarp' && 
-                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
-                    <span>📅 SINCE: March 2025</span>
-                `;
+                statsHtml = `<span>❤️ LOVE MESSAGES: ${loveMsgs}</span>`;
             }
             
             document.getElementById('chatStats').innerHTML = statsHtml;
@@ -466,8 +494,6 @@
         setInterval(() => {
             if (Math.random() > 0.7) createHeart();
         }, 300);
-        
-        updateChatStats();
     </script>
 </body>
 </html>
