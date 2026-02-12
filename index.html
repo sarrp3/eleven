@@ -125,30 +125,11 @@
             font-weight: bold;
         }
         
-        .upload-section {
-            background: #f0f0f0;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .upload-btn {
-            background: #ff4d6d;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            display: inline-block;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        
         .chat-container {
             background: #f9f9f9;
             border-radius: 15px;
             padding: 20px;
-            height: 500px;
+            height: 600px;
             display: flex;
             flex-direction: column;
         }
@@ -230,6 +211,13 @@
             color: white;
         }
         
+        .error-message {
+            color: #ff4d6d;
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+        }
+        
         @keyframes floatUp {
             0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
             100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
@@ -261,29 +249,20 @@
         
         <div id="lockedContent" class="locked-content">
             <div id="lockOverlay" class="lock-overlay">
-                💕 Say YES to upload your chats! 💕
+                💕 Say YES to see our 2,500+ messages! 💕
             </div>
             
-            <div class="upload-section">
-                <p style="margin-bottom: 10px; color: #333; font-size: 1.1rem;">📁 Upload your chat history (TXT file)</p>
-                <input type="file" id="chatFile" accept=".txt" style="display: none;">
-                <button class="upload-btn" onclick="document.getElementById('chatFile').click()">Choose TXT File</button>
-                <p id="fileName" style="margin-top: 10px; color: #666; font-size: 0.9rem;">No file selected</p>
+            <div id="chatStats" class="chat-stats">📊 Loading chats.txt...</div>
+            
+            <div class="chat-filter">
+                <button class="filter-btn active" onclick="filterChats('all')">💬 ALL</button>
+                <button class="filter-btn" onclick="filterChats('Elvin')">💗 ELVIN</button>
+                <button class="filter-btn" onclick="filterChats('Sarp')">💙 SARP</button>
+                <button class="filter-btn" onclick="filterChats('love')">❤️ LOVE</button>
             </div>
             
-            <div class="chat-container">
-                <div id="chatStats" class="chat-stats">📊 Upload a TXT file to see stats</div>
-                
-                <div class="chat-filter">
-                    <button class="filter-btn active" onclick="filterChats('all')">💬 ALL</button>
-                    <button class="filter-btn" onclick="filterChats('Elvin')">💗 ELVIN</button>
-                    <button class="filter-btn" onclick="filterChats('Sarp')">💙 SARP</button>
-                    <button class="filter-btn" onclick="filterChats('love')">❤️ LOVE</button>
-                </div>
-                
-                <div id="chatMessages" class="chat-messages">
-                    💕 Upload your chat history TXT file to see messages! 💕
-                </div>
+            <div id="chatMessages" class="chat-messages">
+                <div class="error-message">⏳ Loading chats.txt...</div>
             </div>
         </div>
     </div>
@@ -294,60 +273,59 @@
         let noClickCount = 0;
         let currentFilter = 'all';
 
-        document.getElementById('chatFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            document.getElementById('fileName').innerHTML = '📄 ' + file.name;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                parseChatFile(content);
-            };
-            reader.readAsText(file);
-        });
-
-        function parseChatFile(content) {
-            const lines = content.split('\n');
-            chatHistory = [];
-            
-            lines.forEach(line => {
-                line = line.trim();
-                if (!line) return;
-                
-                const match = line.match(/\[(.*?)\]\s+([^:]+):\s+(.+)/);
-                if (match) {
-                    let time = match[1];
-                    let sender = match[2].trim();
-                    let text = match[3].trim();
-                    let type = sender.includes('Sarp') ? 'sent' : 'received';
-                    
-                    if (sender.includes('Sarp') || sender.includes('мой мëд')) {
-                        sender = 'Sarp';
-                        type = 'sent';
-                    } else if (sender.includes('Elvin')) {
-                        sender = 'Elvin';
-                        type = 'received';
-                    } else {
-                        return;
+        // Load chats.txt on page load
+        window.onload = function() {
+            fetch('chats.txt')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('chats.txt not found');
                     }
-                    
-                    chatHistory.push({
-                        sender: sender,
-                        text: text,
-                        time: time,
-                        type: type
-                    });
+                    return response.text();
+                })
+                .then(text => {
+                    parseChats(text);
+                    document.getElementById('chatStats').innerHTML = `📊 Loaded ${chatHistory.length} messages`;
+                    if (isUnlocked) {
+                        showMessages();
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('chatMessages').innerHTML = 
+                        '<div class="error-message">❌ chats.txt not found!<br><br>Please create a file named "chats.txt" with your WhatsApp export.</div>';
+                    document.getElementById('chatStats').innerHTML = '📊 Error loading chats.txt';
+                });
+        };
+
+        function parseChats(text) {
+            chatHistory = [];
+            const lines = text.split('\n');
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                
+                let match = line.match(/\[(.*?)\]\s+([^:]+):\s+(.+)/);
+                if (!match) continue;
+                
+                let time = match[1];
+                let sender = match[2].trim();
+                let message = match[3].trim();
+                
+                if (sender.includes('Sarp') || sender.includes('мой мëd') || sender.includes('moyd')) {
+                    sender = 'Sarp';
+                } else if (sender.includes('Elvin')) {
+                    sender = 'Elvin';
+                } else {
+                    continue;
                 }
-            });
-            
-            if (isUnlocked) {
-                updateChatStats();
-                loadChats();
+                
+                chatHistory.push({
+                    sender: sender,
+                    text: message,
+                    time: time,
+                    type: sender === 'Sarp' ? 'sent' : 'received'
+                });
             }
-            
-            console.log('✅ Loaded', chatHistory.length, 'messages');
         }
 
         function sayYes() {
@@ -357,12 +335,12 @@
             document.getElementById('lockedContent').classList.add('unlocked');
             
             document.getElementById('questionText').innerHTML = 'YAY! You said YES! ❤️❤️❤️';
-            document.getElementById('message').innerHTML = 'Now upload your chat history TXT file! 💕';
+            document.getElementById('message').innerHTML = '3 months, ' + chatHistory.length + ' messages... You make me the happiest person ever! 🥰';
             document.getElementById('noBtn').style.display = 'none';
             
             if (chatHistory.length > 0) {
-                updateChatStats();
-                loadChats();
+                showMessages();
+                updateStats();
             }
             
             for(let i = 0; i < 50; i++) setTimeout(createHeart, i * 20);
@@ -382,7 +360,7 @@
             yesBtn.style.transform = `scale(${1 + (noClickCount * 0.15)})`;
         }
         
-        function loadChats() {
+        function showMessages() {
             if (!isUnlocked || chatHistory.length === 0) return;
             
             const container = document.getElementById('chatMessages');
@@ -391,7 +369,7 @@
             let filtered = [];
             
             if (currentFilter === 'all') {
-                filtered = [...chatHistory];
+                filtered = chatHistory;
             } else if (currentFilter === 'Elvin') {
                 filtered = chatHistory.filter(c => c.sender === 'Elvin');
             } else if (currentFilter === 'Sarp') {
@@ -410,11 +388,11 @@
             }
             
             if (filtered.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">💕 No messages found 💕</div>';
+                container.innerHTML = '<div class="error-message">💕 No messages found 💕</div>';
                 return;
             }
             
-            filtered.slice(-200).reverse().forEach(msg => {
+            filtered.reverse().forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `chat-message ${msg.type === 'sent' ? 'sent' : ''}`;
                 
@@ -430,7 +408,7 @@
         }
         
         function filterChats(filter) {
-            if (!isUnlocked) return;
+            if (!isUnlocked || chatHistory.length === 0) return;
             
             currentFilter = filter;
             
@@ -439,41 +417,39 @@
             });
             event.target.classList.add('active');
             
-            loadChats();
-            updateChatStats();
+            showMessages();
+            updateStats();
         }
         
-        function updateChatStats() {
-            if (chatHistory.length === 0) {
-                document.getElementById('chatStats').innerHTML = '📊 Upload a TXT file to see stats';
-                return;
-            }
-            
-            const totalMsgs = chatHistory.length;
-            const elvinMsgs = chatHistory.filter(c => c.sender === 'Elvin').length;
-            const sarpMsgs = chatHistory.filter(c => c.sender === 'Sarp').length;
-            const loveMsgs = chatHistory.filter(c => 
-                c.text.includes('❤️') || c.text.includes('💕') || c.text.includes('love') || c.text.includes('sevi')
+        function updateStats() {
+            const total = chatHistory.length;
+            const elvin = chatHistory.filter(c => c.sender === 'Elvin').length;
+            const sarp = chatHistory.filter(c => c.sender === 'Sarp').length;
+            const love = chatHistory.filter(c => 
+                c.text.includes('❤️') || 
+                c.text.includes('💕') || 
+                c.text.includes('love') || 
+                c.text.includes('sevi')
             ).length;
             
-            let statsHtml = '';
+            let html = '';
             
             if (currentFilter === 'all') {
-                statsHtml = `
-                    <span>💬 TOTAL: ${totalMsgs}</span>
-                    <span>💗 ELVIN: ${elvinMsgs}</span>
-                    <span>💙 SARP: ${sarpMsgs}</span>
-                    <span>❤️ LOVE: ${loveMsgs}</span>
+                html = `
+                    <span>💬 TOTAL: ${total}</span>
+                    <span>💗 ELVIN: ${elvin}</span>
+                    <span>💙 SARP: ${sarp}</span>
+                    <span>❤️ LOVE: ${love}</span>
                 `;
             } else if (currentFilter === 'Elvin') {
-                statsHtml = `<span>💗 ELVIN: ${elvinMsgs} messages</span>`;
+                html = `<span>💗 ELVIN: ${elvin} messages</span>`;
             } else if (currentFilter === 'Sarp') {
-                statsHtml = `<span>💙 SARP: ${sarpMsgs} messages</span>`;
+                html = `<span>💙 SARP: ${sarp} messages</span>`;
             } else if (currentFilter === 'love') {
-                statsHtml = `<span>❤️ LOVE MESSAGES: ${loveMsgs}</span>`;
+                html = `<span>❤️ LOVE: ${love} messages</span>`;
             }
             
-            document.getElementById('chatStats').innerHTML = statsHtml;
+            document.getElementById('chatStats').innerHTML = html;
         }
         
         function createHeart() {
