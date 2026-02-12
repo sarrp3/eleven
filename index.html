@@ -126,43 +126,11 @@
             font-weight: bold;
         }
         
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .tab-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 50px;
-            background: #f0f0f0;
-            color: #333;
-            font-size: 1.1rem;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .tab-btn.active {
-            background: #ff4d6d;
-            color: white;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
         .chat-container {
             background: #f9f9f9;
             border-radius: 15px;
             padding: 20px;
-            height: 500px;
+            height: 600px;
             display: flex;
             flex-direction: column;
         }
@@ -175,7 +143,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            font-weight: bold;
         }
         
         .chat-messages {
@@ -227,13 +196,15 @@
         }
         
         .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid #ff4d6d;
+            padding: 10px 20px;
+            border: 2px solid #ff4d6d;
             background: white;
             color: #ff4d6d;
             border-radius: 50px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
         }
         
         .filter-btn.active {
@@ -241,56 +212,9 @@
             color: white;
         }
         
-        .ai-section {
-            background: #f9f9f9;
-            border-radius: 15px;
-            padding: 20px;
-        }
-        
-        .ai-status {
+        .filter-btn:hover {
             background: #ff4d6d;
             color: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            display: inline-block;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        
-        .ai-input {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .ai-input input {
-            flex-grow: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 50px;
-            font-size: 1rem;
-        }
-        
-        .ai-input button {
-            padding: 12px 24px;
-            background: #ff4d6d;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .ai-response {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: left;
-            min-height: 200px;
-            border: 2px solid #ffe6e9;
-            white-space: pre-wrap;
-            line-height: 1.6;
-            font-family: inherit;
         }
         
         .love-quote {
@@ -300,25 +224,8 @@
             margin: 15px 0;
             font-style: italic;
             color: #ff4d6d;
-        }
-        
-        .api-status {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #c3e6cb;
-            font-size: 0.95rem;
-        }
-        
-        .loading {
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            text-align: center;
+            font-size: 1.1rem;
         }
         
         @keyframes floatUp {
@@ -332,6 +239,7 @@
             .question { font-size: 1.5rem; }
             .btn { padding: 12px 30px; font-size: 1.2rem; }
             .lock-overlay { font-size: 1.2rem; padding: 20px; }
+            .chat-message { max-width: 100%; }
         }
     </style>
 </head>
@@ -352,58 +260,27 @@
         
         <div id="lockedContent" class="locked-content">
             <div id="lockOverlay" class="lock-overlay">
-                💕 Say YES to unlock our memories! 💕
+                💕 Say YES to see our 2,500+ messages! 💕
             </div>
             
-            <div class="tabs">
-                <button class="tab-btn" onclick="switchTab('chats')">💬 Our Chats</button>
-                <button class="tab-btn" onclick="switchTab('ai')">🤖 Ask About Us</button>
-            </div>
-            
-            <div id="chats-tab" class="tab-content active">
-                <div class="chat-container">
-                    <div id="chatStats" class="chat-stats">📊 Loading...</div>
-                    <div class="chat-filter">
-                        <button class="filter-btn active" onclick="filterChats('all')">💬 All</button>
-                        <button class="filter-btn" onclick="filterChats('Elvin')">💗 Elvin</button>
-                        <button class="filter-btn" onclick="filterChats('Sarp')">💙 Sarp</button>
-                        <button class="filter-btn" onclick="filterChats('❤️')">❤️ Love</button>
-                        <button class="filter-btn" onclick="filterChats('night')">🌙 Night Talks</button>
-                        <button class="filter-btn" onclick="filterChats('July')">📅 July 4</button>
-                    </div>
-                    <div id="chatMessages" class="chat-messages">
-                        💕 Say YES to unlock our conversations! 💕
-                    </div>
+            <div class="chat-container">
+                <div id="chatStats" class="chat-stats">📊 Loading chat statistics...</div>
+                
+                <div class="chat-filter">
+                    <button class="filter-btn active" onclick="filterChats('all')">💬 ALL MESSAGES</button>
+                    <button class="filter-btn" onclick="filterChats('Elvin')">💗 ELVIN</button>
+                    <button class="filter-btn" onclick="filterChats('Sarp')">💙 SARP</button>
+                    <button class="filter-btn" onclick="filterChats('love')">❤️ LOVE</button>
                 </div>
-            </div>
-            
-            <div id="ai-tab" class="tab-content">
-                <div class="ai-section">
-                    <h3 style="color: #ff4d6d; margin-bottom: 10px;">🤖 Ask me anything about us</h3>
-                    
-                    <div id="apiStatus" class="api-status">
-                        ✅ Cohere AI ready
-                    </div>
-                    
-                    <div class="love-quote">
-                        I've read all our messages. Ask me anything 💕
-                    </div>
-                    
-                    <div class="ai-input">
-                        <input type="text" id="aiQuestion" placeholder="Ask anything... (e.g., 'When did we first talk?', 'What did Sarp say on July 4th?')" disabled>
-                        <button id="aiAskBtn" onclick="askCohere()" disabled>Ask 🤖</button>
-                    </div>
-                    <div id="aiResponse" class="ai-response">
-                        ✨ Say YES to unlock our AI ✨
-                    </div>
+                
+                <div id="chatMessages" class="chat-messages">
+                    💕 Say YES to unlock all our conversations! 💕
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const COHERE_API_KEY = '5ap6EVAZBWNG5hdM6GuT1ZXqO9JfN2qvehcib21B';
-        
         let chatHistory = [];
         let isUnlocked = false;
         let noClickCount = 0;
@@ -411,12 +288,17 @@
         
         if (typeof window.chatHistory !== 'undefined' && window.chatHistory.length > 0) {
             chatHistory = window.chatHistory;
+            console.log('✅ Loaded', chatHistory.length, 'messages');
         } else {
+            console.error('❌ chats.js not loaded');
             chatHistory = [
                 { sender: "Elvin", text: "Will you be my Valentine? ❤️", time: "2025-03-02 19:52", type: "received" },
+                { sender: "Sarp", text: "Doesnt look like it😔", time: "2025-03-03 01:42", type: "sent" },
                 { sender: "Sarp", text: "I love you so much that if every bit of love was 1 gram you'd be crushed by infinity", time: "2025-07-04 23:45", type: "sent" },
                 { sender: "Elvin", text: "I love you more ❤️", time: "2025-07-04 23:46", type: "received" },
-                { sender: "Sarp", text: "You're my first real love and my last", time: "2025-07-05 00:01", type: "sent" }
+                { sender: "Elvin", text: "You're my first real love and my last", time: "2025-07-05 00:01", type: "received" },
+                { sender: "Sarp", text: "I miss you so much", time: "2025-07-06 01:23", type: "sent" },
+                { sender: "Elvin", text: "I miss you too baby 💕", time: "2025-07-06 01:25", type: "received" }
             ];
         }
 
@@ -425,15 +307,13 @@
             
             document.getElementById('lockOverlay').classList.add('hidden');
             document.getElementById('lockedContent').classList.add('unlocked');
-            document.getElementById('aiQuestion').disabled = false;
-            document.getElementById('aiAskBtn').disabled = false;
             
             document.getElementById('questionText').innerHTML = 'YAY! You said YES! ❤️❤️❤️';
             document.getElementById('message').innerHTML = '3 months, ' + chatHistory.length + ' messages, and now this... You make me the happiest person ever! 🥰';
             document.getElementById('noBtn').style.display = 'none';
             
-            loadChats();
             updateChatStats();
+            loadChats();
             
             for(let i = 0; i < 50; i++) setTimeout(createHeart, i * 20);
         }
@@ -452,129 +332,120 @@
             yesBtn.style.transform = `scale(${1 + (noClickCount * 0.15)})`;
         }
         
-        function switchTab(tabName) {
-            if (!isUnlocked) return;
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            event.target.classList.add('active');
-        }
-        
         function loadChats() {
             if (!isUnlocked) return;
             
             const container = document.getElementById('chatMessages');
             container.innerHTML = '';
             
-            let filtered = [...chatHistory];
-            if (currentFilter === 'Elvin') filtered = chatHistory.filter(c => c.sender === 'Elvin');
-            else if (currentFilter === 'Sarp') filtered = chatHistory.filter(c => c.sender === 'Sarp');
-            else if (currentFilter === '❤️') filtered = chatHistory.filter(c => 
-                c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi') || c.text.includes('💕') || c.text.includes('aşk'));
-            else if (currentFilter === 'night') filtered = chatHistory.filter(c => 
-                c.time.includes('23:') || c.time.includes('00:') || c.time.includes('01:') || 
-                c.time.includes('02:') || c.time.includes('03:') || c.time.includes('04:'));
-            else if (currentFilter === 'July') filtered = chatHistory.filter(c => 
-                c.time.includes('2025-07-04') || c.time.includes('2025-07-05'));
+            let filtered = [];
             
-            filtered.slice(-50).reverse().forEach(msg => {
-                const div = document.createElement('div');
-                div.className = `chat-message ${msg.type === 'sent' ? 'sent' : ''}`;
-                div.innerHTML = `<div class="sender">${msg.sender}</div><div>${msg.text}</div><div class="time">${msg.time}</div>`;
-                container.appendChild(div);
-            });
+            if (currentFilter === 'all') {
+                filtered = [...chatHistory];
+            } else if (currentFilter === 'Elvin') {
+                filtered = chatHistory.filter(c => c.sender === 'Elvin');
+            } else if (currentFilter === 'Sarp') {
+                filtered = chatHistory.filter(c => c.sender === 'Sarp');
+            } else if (currentFilter === 'love') {
+                filtered = chatHistory.filter(c => 
+                    c.text.includes('❤️') || 
+                    c.text.includes('💕') || 
+                    c.text.includes('love') || 
+                    c.text.includes('sevi') || 
+                    c.text.includes('aşk') ||
+                    c.text.includes('miss you') ||
+                    c.text.includes('özledim') ||
+                    c.text.includes('sarıl') ||
+                    c.text.includes('hug')
+                );
+            }
             
             if (filtered.length === 0) {
                 container.innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">💕 No messages found 💕</div>';
+                return;
             }
+            
+            filtered.reverse().forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `chat-message ${msg.type === 'sent' ? 'sent' : ''}`;
+                
+                let senderName = msg.sender;
+                if (msg.sender === 'Sarp') senderName = 'Sarp 💙';
+                if (msg.sender === 'Elvin') senderName = 'Elvin 💗';
+                
+                div.innerHTML = `
+                    <div class="sender">${senderName}</div>
+                    <div>${msg.text}</div>
+                    <div class="time">${msg.time}</div>
+                `;
+                container.appendChild(div);
+            });
+            
+            container.scrollTop = container.scrollHeight;
         }
         
         function filterChats(filter) {
             if (!isUnlocked) return;
+            
             currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
             event.target.classList.add('active');
+            
             loadChats();
+            updateChatStats();
         }
         
         function updateChatStats() {
+            const totalMsgs = chatHistory.length;
             const elvinMsgs = chatHistory.filter(c => c.sender === 'Elvin').length;
             const sarpMsgs = chatHistory.filter(c => c.sender === 'Sarp').length;
             const loveMsgs = chatHistory.filter(c => 
-                c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi')).length;
-            const julyMsgs = chatHistory.filter(c => 
-                c.time.includes('2025-07-04')).length;
+                c.text.includes('❤️') || 
+                c.text.includes('💕') || 
+                c.text.includes('love') || 
+                c.text.includes('sevi') || 
+                c.text.includes('aşk')
+            ).length;
             
-            document.getElementById('chatStats').innerHTML = `
-                <span>💬 Total: ${chatHistory.length} messages</span>
-                <span>💗 Elvin: ${elvinMsgs}</span>
-                <span>💙 Sarp: ${sarpMsgs}</span>
-                <span>❤️ Love: ${loveMsgs}</span>
-                <span>📅 July 4: ${julyMsgs} messages</span>
-                <span>💕 Since: March 2025</span>
-            `;
-        }
-        
-        async function askCohere() {
-            if (!isUnlocked) return;
+            let statsHtml = '';
             
-            const question = document.getElementById('aiQuestion').value.trim();
-            if (!question) {
-                document.getElementById('aiResponse').innerHTML = '❓ Please ask a question!';
-                return;
+            if (currentFilter === 'all') {
+                statsHtml = `
+                    <span>💬 TOTAL: ${totalMsgs} messages</span>
+                    <span>💗 ELVIN: ${elvinMsgs}</span>
+                    <span>💙 SARP: ${sarpMsgs}</span>
+                    <span>❤️ LOVE: ${loveMsgs}</span>
+                    <span>📅 SINCE: March 2025</span>
+                `;
+            } else if (currentFilter === 'Elvin') {
+                statsHtml = `
+                    <span>💗 ELVIN: ${elvinMsgs} messages</span>
+                    <span>❤️ LOVE: ${chatHistory.filter(c => c.sender === 'Elvin' && 
+                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
+                    <span>📅 SINCE: March 2025</span>
+                `;
+            } else if (currentFilter === 'Sarp') {
+                statsHtml = `
+                    <span>💙 SARP: ${sarpMsgs} messages</span>
+                    <span>❤️ LOVE: ${chatHistory.filter(c => c.sender === 'Sarp' && 
+                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
+                    <span>📅 SINCE: March 2025</span>
+                `;
+            } else if (currentFilter === 'love') {
+                statsHtml = `
+                    <span>❤️ LOVE MESSAGES: ${loveMsgs}</span>
+                    <span>💗 Elvin: ${chatHistory.filter(c => c.sender === 'Elvin' && 
+                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
+                    <span>💙 Sarp: ${chatHistory.filter(c => c.sender === 'Sarp' && 
+                        (c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi'))).length}</span>
+                    <span>📅 SINCE: March 2025</span>
+                `;
             }
             
-            const responseEl = document.getElementById('aiResponse');
-            const askBtn = document.getElementById('aiAskBtn');
-            
-            responseEl.innerHTML = '🤔 Thinking...';
-            askBtn.disabled = true;
-            
-            try {
-                const recentMessages = chatHistory.slice(-100).map(c => 
-                    `${c.sender} (${c.time}): ${c.text}`
-                ).join('\n');
-                
-                const prompt = `You are an AI that knows everything about Sarp and Elvin's relationship. 
-They became official on July 4, 2025 at 3:00 AM.
-Sarp's most romantic message: "I love you so much that if every bit of love was 1 gram you'd be crushed by infinity"
-Elvin's most romantic message: "I was made for lovin' you baby, you were made for lovin' me"
-
-Here are their recent messages:
-${recentMessages}
-
-Question: ${question}
-
-Answer warmly and specifically. Use Turkish or English based on the question.`;
-
-                const response = await fetch('https://api.cohere.ai/v1/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${COHERE_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'command',
-                        prompt: prompt,
-                        max_tokens: 500,
-                        temperature: 0.8
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('API error');
-                }
-                
-                const data = await response.json();
-                const answer = data.generations[0].text.trim();
-                
-                responseEl.innerHTML = answer.replace(/\n/g, '<br>');
-                
-            } catch (error) {
-                responseEl.innerHTML = `❌ Bir hata oluştu. Ama seni seviyorum! ❤️`;
-            } finally {
-                askBtn.disabled = false;
-            }
+            document.getElementById('chatStats').innerHTML = statsHtml;
         }
         
         function createHeart() {
