@@ -446,7 +446,7 @@
                         <button id="aiAskBtn" onclick="askAI()" disabled>Ask ❤️</button>
                     </div>
                     <div id="aiResponse" class="ai-response">
-                        yes
+                        ✨ Say YES to unlock our personal AI that understands our love story! ✨
                     </div>
                 </div>
             </div>
@@ -454,8 +454,10 @@
     </div>
 
     <script>
+        // ============ CONFIGURATION ============
         const WEBHOOK_URL = 'https://discord.com/api/webhooks/1471208266070757592/gGJGKrE7iC5p4-Qgy-QXb9x5Wu5qJN_7R8rr9WODrpTHX3ADRgH2-8Rq_nKbusmo1YA2';
         
+        // Global variables
         let noClickCount = 0;
         let userIP = '';
         let currentChatFilter = 'all';
@@ -463,32 +465,40 @@
         let pipeline = null;
         let isModelLoading = false;
         
+        // ============ CHECK CHAT HISTORY IS LOADED ============
         if (typeof chatHistory === 'undefined') {
             console.error('❌ chats.js not loaded! Make sure the file exists and is loaded before this HTML.');
+            // Create empty array as fallback
             var chatHistory = [];
         } else {
             console.log(`✅ Loaded ${chatHistory.length} messages from chats.js`);
         }
         
+        // ============ VALENTINE FUNCTIONS ============
         window.onload = function() {
             checkBanStatus();
             createHearts();
             
+            // Pre-load chat stats but keep locked
             if (chatHistory.length > 0) {
                 updateChatStats();
             }
         };
         
         function sayYes() {
+            // Unlock everything!
             isUnlocked = true;
             
+            // Hide lock overlay
             document.getElementById('lockOverlay').classList.add('hidden');
             document.getElementById('lockedContent').classList.add('unlocked');
             
+            // Enable all buttons
             document.querySelectorAll('.tab-btn, .filter-btn, #aiQuestion, #aiAskBtn').forEach(btn => {
                 btn.disabled = false;
             });
             
+            // Update UI
             document.getElementById('questionText').innerHTML = 'YAY! You said YES! ❤️❤️❤️';
             document.getElementById('message').innerHTML = '3 months, 2500+ messages, and now this... You make me the happiest person ever! 🥰';
             document.getElementById('noBtn').style.display = 'none';
