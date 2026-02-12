@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Will You Be My Valentine? ❤️ - Sarp & Elvin</title>
-    
-    <!-- Your chat history -->
     <script src="chats.js"></script>
-    
     <style>
         * {
             margin: 0;
@@ -40,7 +37,6 @@
             margin-bottom: 1rem;
         }
         
-        /* LOCK SYSTEM */
         .locked-content {
             position: relative;
             filter: blur(8px);
@@ -108,9 +104,19 @@
             font-weight: bold;
         }
         
-        .btn:hover { transform: scale(1.1); }
-        .yes-btn { background: #ff4d6d; color: white; }
-        .no-btn { background: #666; color: white; }
+        .btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .yes-btn {
+            background: #ff4d6d;
+            color: white;
+        }
+        
+        .no-btn {
+            background: #666;
+            color: white;
+        }
         
         .message {
             margin-top: 30px;
@@ -144,8 +150,13 @@
             color: white;
         }
         
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
         
         .chat-container {
             background: #f9f9f9;
@@ -198,8 +209,15 @@
             color: #ff4d6d;
         }
         
-        .chat-message.sent .sender { color: #ffe6e9; }
-        .chat-message .time { font-size: 0.7rem; opacity: 0.7; margin-top: 5px; }
+        .chat-message.sent .sender {
+            color: #ffe6e9;
+        }
+        
+        .chat-message .time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
         
         .chat-filter {
             display: flex;
@@ -321,7 +339,6 @@
     <div class="container">
         <h1>❤️ Sarp & Elvin ❤️</h1>
         
-        <!-- VALENTINE QUESTION -->
         <div class="valentine-section">
             <div class="question" id="questionText">
                 Will YOU be my Valentine? 💕
@@ -333,7 +350,6 @@
             <div id="message" class="message"></div>
         </div>
         
-        <!-- LOCKED CONTENT -->
         <div id="lockedContent" class="locked-content">
             <div id="lockOverlay" class="lock-overlay">
                 💕 Say YES to unlock our memories! 💕
@@ -341,10 +357,9 @@
             
             <div class="tabs">
                 <button class="tab-btn" onclick="switchTab('chats')">💬 Our Chats</button>
-                <button class="tab-btn" onclick="switchTab('ai')">🤖 AI That Knows Us</button>
+                <button class="tab-btn" onclick="switchTab('ai')">🤖 Ask About Us</button>
             </div>
             
-            <!-- CHATS TAB -->
             <div id="chats-tab" class="tab-content active">
                 <div class="chat-container">
                     <div id="chatStats" class="chat-stats">📊 Loading...</div>
@@ -362,25 +377,24 @@
                 </div>
             </div>
             
-            <!-- AI TAB - DEEPSEEK API PRE-CONFIGURED -->
             <div id="ai-tab" class="tab-content">
                 <div class="ai-section">
-                    <h3 style="color: #ff4d6d; margin-bottom: 10px;">🤖 Our Personal AI - DeepSeek</h3>
+                    <h3 style="color: #ff4d6d; margin-bottom: 10px;">🤖 Ask me anything about us</h3>
                     
                     <div id="apiStatus" class="api-status">
-                        ✅ DeepSeek API is ready! 100% FREE - Ask anything about us!
+                        ✅ Cohere AI ready
                     </div>
                     
                     <div class="love-quote">
-                        This AI has read ALL 2,500+ messages. It truly understands our love story 💕
+                        I've read all our messages. Ask me anything 💕
                     </div>
                     
                     <div class="ai-input">
-                        <input type="text" id="aiQuestion" placeholder="Ask anything... (e.g., 'When did we first talk?', 'What did Sarp say on July 4th?', 'Bize ne zaman sevgili olduk?')" disabled>
-                        <button id="aiAskBtn" onclick="askDeepSeek()" disabled>Ask AI 🤖</button>
+                        <input type="text" id="aiQuestion" placeholder="Ask anything... (e.g., 'When did we first talk?', 'What did Sarp say on July 4th?')" disabled>
+                        <button id="aiAskBtn" onclick="askCohere()" disabled>Ask 🤖</button>
                     </div>
                     <div id="aiResponse" class="ai-response">
-                        ✨ Say YES to unlock our personal AI that truly understands our conversations! ✨
+                        ✨ Say YES to unlock our AI ✨
                     </div>
                 </div>
             </div>
@@ -388,22 +402,16 @@
     </div>
 
     <script>
-        // ============ YOUR DEEPSEEK API KEY ============
-        const DEEPSEEK_API_KEY = 'sk-baa859be1e62491eb31d5512ffc82081';
+        const COHERE_API_KEY = '5ap6EVAZBWNG5hdM6GuT1ZXqO9JfN2qvehcib21B';
         
-        // ============ YOUR CHAT HISTORY ============
         let chatHistory = [];
         let isUnlocked = false;
         let noClickCount = 0;
         let currentFilter = 'all';
         
-        // Load chats from your chats.js
         if (typeof window.chatHistory !== 'undefined' && window.chatHistory.length > 0) {
             chatHistory = window.chatHistory;
-            console.log('✅ Loaded', chatHistory.length, 'messages from chats.js');
         } else {
-            console.error('❌ chats.js not loaded properly');
-            // Fallback sample data - but YOUR chats.js should override this
             chatHistory = [
                 { sender: "Elvin", text: "Will you be my Valentine? ❤️", time: "2025-03-02 19:52", type: "received" },
                 { sender: "Sarp", text: "I love you so much that if every bit of love was 1 gram you'd be crushed by infinity", time: "2025-07-04 23:45", type: "sent" },
@@ -412,26 +420,21 @@
             ];
         }
 
-        // ============ VALENTINE FUNCTIONS ============
         function sayYes() {
             isUnlocked = true;
             
-            // Unlock UI
             document.getElementById('lockOverlay').classList.add('hidden');
             document.getElementById('lockedContent').classList.add('unlocked');
             document.getElementById('aiQuestion').disabled = false;
             document.getElementById('aiAskBtn').disabled = false;
             
-            // Update text
             document.getElementById('questionText').innerHTML = 'YAY! You said YES! ❤️❤️❤️';
             document.getElementById('message').innerHTML = '3 months, ' + chatHistory.length + ' messages, and now this... You make me the happiest person ever! 🥰';
             document.getElementById('noBtn').style.display = 'none';
             
-            // Load chats
             loadChats();
             updateChatStats();
             
-            // Celebration!
             for(let i = 0; i < 50; i++) setTimeout(createHeart, i * 20);
         }
         
@@ -449,7 +452,6 @@
             yesBtn.style.transform = `scale(${1 + (noClickCount * 0.15)})`;
         }
         
-        // ============ CHAT FUNCTIONS ============
         function switchTab(tabName) {
             if (!isUnlocked) return;
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -513,8 +515,7 @@
             `;
         }
         
-        // ============ DEEPSEEK API ============
-        async function askDeepSeek() {
+        async function askCohere() {
             if (!isUnlocked) return;
             
             const question = document.getElementById('aiQuestion').value.trim();
@@ -530,57 +531,52 @@
             askBtn.disabled = true;
             
             try {
-                // Get the most relevant messages (last 150 messages)
-                const recentMessages = chatHistory.slice(-150).map(c => 
+                const recentMessages = chatHistory.slice(-100).map(c => 
                     `${c.sender} (${c.time}): ${c.text}`
                 ).join('\n');
                 
-                const systemPrompt = `Sen Sarp ve Elvin'in tüm mesajlaşmalarını bilen bir AIsın. 
-Size özel: Sarp ve Elvin 4 Temmuz 2025'te saat 03:00'te sevgili oldular. 
-Sarp'ın Elvin'e söylediği en özel söz: "I love you so much that if every bit of love was 1 gram you'd be crushed by infinity"
-Elvin'in Sarp'a söylediği en özel söz: "I was made for lovin' you baby, you were made for lovin' me"
+                const prompt = `You are an AI that knows everything about Sarp and Elvin's relationship. 
+They became official on July 4, 2025 at 3:00 AM.
+Sarp's most romantic message: "I love you so much that if every bit of love was 1 gram you'd be crushed by infinity"
+Elvin's most romantic message: "I was made for lovin' you baby, you were made for lovin' me"
 
-Soruları tatlı, romantik ve içten cevapla. Tarih ve saat sorulursa net cevap ver.
-Türkçe sorulursa Türkçe, İngilizce sorulursa İngilizce cevapla.`;
+Here are their recent messages:
+${recentMessages}
 
-                const userPrompt = `İşte Sarp ve Elvin'in son mesajları:\n${recentMessages}\n\nSoru: ${question}`;
+Question: ${question}
 
-                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+Answer warmly and specifically. Use Turkish or English based on the question.`;
+
+                const response = await fetch('https://api.cohere.ai/v1/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                        'Authorization': `Bearer ${COHERE_API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: 'deepseek-chat',
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: userPrompt }
-                        ],
-                        temperature: 0.8,
-                        max_tokens: 600
+                        model: 'command',
+                        prompt: prompt,
+                        max_tokens: 500,
+                        temperature: 0.8
                     })
                 });
                 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'API error');
+                    throw new Error('API error');
                 }
                 
                 const data = await response.json();
-                const answer = data.choices[0].message.content;
+                const answer = data.generations[0].text.trim();
                 
                 responseEl.innerHTML = answer.replace(/\n/g, '<br>');
                 
             } catch (error) {
-                console.error('DeepSeek error:', error);
-                responseEl.innerHTML = `❌ Üzgünüm, bir hata oluştu. Ama yine de seni seviyorum! ❤️\n\nHata: ${error.message}`;
+                responseEl.innerHTML = `❌ Bir hata oluştu. Ama seni seviyorum! ❤️`;
             } finally {
                 askBtn.disabled = false;
             }
         }
         
-        // ============ HEARTS ============
         function createHeart() {
             const heart = document.createElement('div');
             heart.innerHTML = Math.random() > 0.5 ? '❤️' : '💕';
@@ -596,16 +592,11 @@ Türkçe sorulursa Türkçe, İngilizce sorulursa İngilizce cevapla.`;
             setTimeout(() => heart.remove(), 5000);
         }
         
-        // Start hearts
         setInterval(() => {
             if (Math.random() > 0.7) createHeart();
         }, 300);
         
-        // Initialize stats
         updateChatStats();
-        
-        // Test API key on load
-        console.log('✅ DeepSeek API key configured');
     </script>
 </body>
 </html>
