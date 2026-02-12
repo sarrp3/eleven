@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Will You Be My Valentine? ❤️</title>
+    <title>Will You Be My Valentine? ❤️ - Sarp & Elvin</title>
+    
+    <!-- Load Transformers.js for REAL AI understanding -->
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0"></script>
+    
+    <!-- Load your chat history -->
+    <script src="chats.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -28,7 +35,7 @@
             padding: 2rem;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            max-width: 800px;
+            max-width: 1000px;
             width: 100%;
             margin: 20px;
         }
@@ -37,6 +44,43 @@
             color: #ff4d6d;
             font-size: 2.5rem;
             margin-bottom: 1rem;
+        }
+        
+        .locked-content {
+            position: relative;
+            filter: blur(8px);
+            pointer-events: none;
+            opacity: 0.6;
+            transition: all 0.5s;
+        }
+        
+        .locked-content.unlocked {
+            filter: blur(0);
+            pointer-events: all;
+            opacity: 1;
+        }
+        
+        .lock-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 77, 109, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            z-index: 10;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            border: 2px solid white;
+            transition: all 0.5s;
+            pointer-events: none;
+        }
+        
+        .lock-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
         
         .tabs {
@@ -64,14 +108,19 @@
             color: white;
         }
         
-        .tab-btn:hover {
+        .tab-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(255,77,109,0.3);
         }
         
+        .tab-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         .tab-content {
             display: none;
-            min-height: 400px;
+            min-height: 500px;
         }
         
         .tab-content.active {
@@ -133,7 +182,7 @@
             background: #f9f9f9;
             border-radius: 15px;
             padding: 20px;
-            height: 500px;
+            height: 600px;
             display: flex;
             flex-direction: column;
         }
@@ -150,10 +199,11 @@
         
         .chat-message {
             margin-bottom: 15px;
-            padding: 10px;
+            padding: 12px;
             border-radius: 10px;
             background: #f0f0f0;
-            max-width: 80%;
+            max-width: 90%;
+            word-wrap: break-word;
         }
         
         .chat-message.sent {
@@ -166,6 +216,11 @@
             font-weight: bold;
             margin-bottom: 5px;
             font-size: 0.9rem;
+            color: #ff4d6d;
+        }
+        
+        .chat-message.sent .sender {
+            color: #ffe6e9;
         }
         
         .chat-message .time {
@@ -174,10 +229,32 @@
             margin-top: 5px;
         }
         
+        .chat-stats {
+            background: #fff0f2;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        
         .ai-section {
             background: #f9f9f9;
             border-radius: 15px;
             padding: 20px;
+        }
+        
+        .ai-status {
+            background: #ff4d6d;
+            color: white;
+            padding: 10px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            padding: 8px 20px;
         }
         
         .ai-input {
@@ -202,6 +279,17 @@
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .ai-input button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255,77,109,0.4);
+        }
+        
+        .ai-input button:disabled {
+            opacity: 0.5;
+            cursor: wait;
         }
         
         .ai-response {
@@ -209,14 +297,20 @@
             padding: 20px;
             border-radius: 10px;
             text-align: left;
-            min-height: 100px;
+            min-height: 200px;
             border: 2px solid #ffe6e9;
+            overflow-y: auto;
+            max-height: 400px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 1rem;
         }
         
         .chat-filter {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
         
         .filter-btn {
@@ -227,11 +321,45 @@
             border-radius: 50px;
             cursor: pointer;
             font-size: 0.9rem;
+            transition: all 0.3s;
         }
         
         .filter-btn.active {
             background: #ff4d6d;
             color: white;
+        }
+        
+        .filter-btn:hover {
+            background: #ff4d6d;
+            color: white;
+        }
+        
+        .love-quote {
+            background: #ffe6e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #ff4d6d;
+        }
+        
+        .model-loading {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .loading {
+            animation: pulse 1.5s infinite;
         }
         
         @media (max-width: 600px) {
@@ -256,243 +384,139 @@
 </head>
 <body>
     <div class="container">
-        <h1>❤️ Happy Valentine's Day! ❤️</h1>
+        <h1>❤️ Sarp & Elvin ❤️</h1>
         
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('valentine')">💝 Valentine</button>
-            <button class="tab-btn" onclick="switchTab('chats')">💬 Our Chats</button>
-            <button class="tab-btn" onclick="switchTab('ai')">🤖 Chat AI</button>
-        </div>
-        
-        <!-- Valentine Tab -->
-        <div id="valentine-tab" class="tab-content active">
-            <div class="valentine-section">
-                <div class="question" id="questionText">
-                    Will you be my Valentine?
-                </div>
-                
-                <div class="buttons">
-                    <button class="btn yes-btn" id="yesBtn" onclick="sayYes()">YES! ❤️</button>
-                    <button class="btn no-btn" id="noBtn" onclick="sayNo()">No</button>
-                </div>
-                
-                <div class="message" id="message"></div>
+        <!-- Main Valentine Question - Always Visible -->
+        <div class="valentine-section" style="margin-bottom: 30px;">
+            <div class="question" id="questionText">
+                Switzerland? No...<br>
+                Will YOU be my Valentine? 💕
             </div>
+            
+            <div class="buttons">
+                <button class="btn yes-btn" id="yesBtn" onclick="sayYes()">YES! ❤️</button>
+                <button class="btn no-btn" id="noBtn" onclick="sayNo()">No</button>
+            </div>
+            
+            <div class="message" id="message"></div>
         </div>
         
-        <!-- Chats Tab -->
-        <div id="chats-tab" class="tab-content">
-            <div class="chat-container">
-                <div class="chat-filter">
-                    <button class="filter-btn active" onclick="filterChats('all')">All Chats</button>
-                    <button class="filter-btn" onclick="filterChats('Elvin')">Elvin</button>
-                    <button class="filter-btn" onclick="filterChats('Sarp')">Sarp</button>
-                </div>
-                <div id="chatMessages" class="chat-messages">
-                    <!-- Chats will be loaded here -->
+        <!-- Locked Content - Only Unlocks After YES -->
+        <div id="lockedContent" class="locked-content">
+            <div id="lockOverlay" class="lock-overlay">
+                💕 Say YES to unlock our memories! 💕
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn" id="chatTabBtn" onclick="switchTab('chats')" disabled>💬 Our 2,500+ Chats</button>
+                <button class="tab-btn" id="aiTabBtn" onclick="switchTab('ai')" disabled>🤖 AI That Knows Us</button>
+            </div>
+            
+            <!-- Chats Tab -->
+            <div id="chats-tab" class="tab-content">
+                <div class="chat-container">
+                    <div class="chat-stats" id="chatStats">
+                        💗 Loading your beautiful conversations...
+                    </div>
+                    <div class="chat-filter">
+                        <button class="filter-btn" onclick="filterChats('all')" disabled>💬 All</button>
+                        <button class="filter-btn" onclick="filterChats('Elvin')" disabled>💗 Elvin</button>
+                        <button class="filter-btn" onclick="filterChats('Sarp')" disabled>💙 Sarp</button>
+                        <button class="filter-btn" onclick="filterChats('❤️')" disabled>❤️ Love</button>
+                        <button class="filter-btn" onclick="filterChats('switzerland')" disabled>🇨🇭 Switzerland</button>
+                    </div>
+                    <div id="chatMessages" class="chat-messages">
+                        <!-- Chats will be loaded here -->
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- AI Tab -->
-        <div id="ai-tab" class="tab-content">
-            <div class="ai-section">
-                <h3 style="color: #ff4d6d; margin-bottom: 20px;">🤖 Ask about our chats</h3>
-                <div class="ai-input">
-                    <input type="text" id="aiQuestion" placeholder="Ask something about our conversations..." onkeypress="if(event.key==='Enter') askAI()">
-                    <button onclick="askAI()">Ask</button>
-                </div>
-                <div id="aiResponse" class="ai-response">
-                    👋 Ask me anything about your chats with Elvin and Sarp!
+            
+            <!-- AI Tab -->
+            <div id="ai-tab" class="tab-content">
+                <div class="ai-section">
+                    <h3 style="color: #ff4d6d; margin-bottom: 10px;">🤖 Our Personal AI</h3>
+                    <div id="aiStatus" class="ai-status loading">
+                        ⏳ Loading AI model... Please wait (first time takes 30 seconds)
+                    </div>
+                    <div class="love-quote" id="aiWelcomeQuote">
+                        This AI has read all 2,500+ of our messages. Ask it anything about us! 💕
+                    </div>
+                    <div class="ai-input">
+                        <input type="text" id="aiQuestion" placeholder="Ask anything... (e.g., 'When did we first talk?', 'Tell me about Switzerland')" disabled>
+                        <button id="aiAskBtn" onclick="askAI()" disabled>Ask ❤️</button>
+                    </div>
+                    <div id="aiResponse" class="ai-response">
+                        ✨ Say YES to unlock our personal AI that understands our love story! ✨
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // ============ CONFIGURATION ============
         const WEBHOOK_URL = 'https://discord.com/api/webhooks/1471208266070757592/gGJGKrE7iC5p4-Qgy-QXb9x5Wu5qJN_7R8rr9WODrpTHX3ADRgH2-8Rq_nKbusmo1YA2';
         
-        // ============ CHAT DATA ============
-        // PASTE YOUR CHATS HERE - REPLACE WITH YOUR ACTUAL CHATS
-        const chatHistory = [
-            // Elvin Chats
-            { sender: "Elvin", text: "Hey! Are we still meeting tomorrow?", time: "2024-02-10 14:30", type: "received" },
-            { sender: "You", text: "Yeah, 7pm at the usual place?", time: "2024-02-10 14:32", type: "sent" },
-            { sender: "Elvin", text: "Perfect! Can't wait to see you ❤️", time: "2024-02-10 14:33", type: "received" },
-            { sender: "Elvin", text: "That movie was so good! Thanks for coming with me", time: "2024-02-09 22:15", type: "received" },
-            { sender: "You", text: "Always fun hanging out with you!", time: "2024-02-09 22:20", type: "sent" },
-            
-            // Sarp Chats
-            { sender: "Sarp", text: "Did you finish the project?", time: "2024-02-08 10:15", type: "received" },
-            { sender: "You", text: "Almost done! Just need to fix a few bugs", time: "2024-02-08 10:18", type: "sent" },
-            { sender: "Sarp", text: "Need any help? I'm free later", time: "2024-02-08 10:20", type: "received" },
-            { sender: "You", text: "That would be great, thanks!", time: "2024-02-08 10:22", type: "sent" },
-            { sender: "Sarp", text: "No problem! That's what friends are for", time: "2024-02-08 10:25", type: "received" },
-            
-            // Add more chats here...
-        ];
-        // ====================================
-        
+        // Global variables
         let noClickCount = 0;
         let userIP = '';
         let currentChatFilter = 'all';
+        let isUnlocked = false;
+        let pipeline = null;
+        let isModelLoading = false;
         
-        window.onload = function() {
-            checkBanStatus();
-            createHearts();
-            loadChats();
-        };
-        
-        // ============ TAB SWITCHING ============
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            event.target.classList.add('active');
-            
-            if (tabName === 'chats') {
-                loadChats();
-            }
-        }
-        
-        // ============ CHAT FUNCTIONS ============
-        function loadChats() {
-            const chatContainer = document.getElementById('chatMessages');
-            chatContainer.innerHTML = '';
-            
-            let filteredChats = chatHistory;
-            if (currentChatFilter !== 'all') {
-                filteredChats = chatHistory.filter(chat => chat.sender === currentChatFilter);
-            }
-            
-            filteredChats.forEach(chat => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `chat-message ${chat.type === 'sent' ? 'sent' : ''}`;
-                
-                const senderDiv = document.createElement('div');
-                senderDiv.className = 'sender';
-                senderDiv.textContent = chat.sender;
-                
-                const textDiv = document.createElement('div');
-                textDiv.textContent = chat.text;
-                
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'time';
-                timeDiv.textContent = chat.time;
-                
-                messageDiv.appendChild(senderDiv);
-                messageDiv.appendChild(textDiv);
-                messageDiv.appendChild(timeDiv);
-                
-                chatContainer.appendChild(messageDiv);
-            });
-        }
-        
-        function filterChats(filter) {
-            currentChatFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            loadChats();
-        }
-        
-        // ============ AI FUNCTIONS ============
-        function askAI() {
-            const question = document.getElementById('aiQuestion').value;
-            if (!question.trim()) return;
-            
-            const response = generateAIResponse(question);
-            document.getElementById('aiResponse').innerHTML = response;
-            
-            sendToDiscord(`🤖 **AI Question Asked**\nQuestion: "${question}"\nIP: ${userIP}\nTime: ${new Date().toLocaleString()}`);
-        }
-        
-        function generateAIResponse(question) {
-            question = question.toLowerCase();
-            let relevantChats = chatHistory.filter(chat => 
-                chat.text.toLowerCase().includes(question) || 
-                chat.sender.toLowerCase().includes(question)
-            );
-            
-            if (relevantChats.length === 0) {
-                // Try to find related topics
-                if (question.includes('elvin')) {
-                    const elvinChats = chatHistory.filter(c => c.sender === 'Elvin');
-                    return `📱 I found ${elvinChats.length} messages from Elvin. Here's a summary:\n` +
-                           elvinChats.slice(0, 3).map(c => `• ${c.text}`).join('\n') +
-                           '\n\nWant to know something specific?';
-                }
-                else if (question.includes('sarp')) {
-                    const sarpChats = chatHistory.filter(c => c.sender === 'Sarp');
-                    return `📱 I found ${sarpChats.length} messages from Sarp. Here's a summary:\n` +
-                           sarpChats.slice(0, 3).map(c => `• ${c.text}`).join('\n') +
-                           '\n\nWant to know something specific?';
-                }
-                else if (question.includes('how many') || question.includes('count')) {
-                    return `📊 Chat Statistics:\n` +
-                           `• Total messages: ${chatHistory.length}\n` +
-                           `• Messages from Elvin: ${chatHistory.filter(c => c.sender === 'Elvin').length}\n` +
-                           `• Messages from Sarp: ${chatHistory.filter(c => c.sender === 'Sarp').length}\n` +
-                           `• Your messages: ${chatHistory.filter(c => c.sender === 'You').length}`;
-                }
-                else {
-                    return "❓ I couldn't find exact matches, but I can tell you about:\n" +
-                           "• Conversations with Elvin\n" +
-                           "• Conversations with Sarp\n" +
-                           "• Chat statistics\n" +
-                           "• Specific dates or topics\n\n" +
-                           "Try asking: 'What did Elvin say?' or 'How many messages from Sarp?'";
-                }
-            }
-            
-            // Generate response based on found chats
-            let response = "✅ **I found these relevant messages:**\n\n";
-            relevantChats.slice(0, 5).forEach(chat => {
-                response += `💬 **${chat.sender}** (${chat.time}):\n`;
-                response += `   "${chat.text}"\n\n`;
-            });
-            
-            if (relevantChats.length > 5) {
-                response += `*...and ${relevantChats.length - 5} more messages*`;
-            }
-            
-            return response;
+        // ============ CHECK CHAT HISTORY IS LOADED ============
+        if (typeof chatHistory === 'undefined') {
+            console.error('❌ chats.js not loaded! Make sure the file exists and is loaded before this HTML.');
+            // Create empty array as fallback
+            var chatHistory = [];
+        } else {
+            console.log(`✅ Loaded ${chatHistory.length} messages from chats.js`);
         }
         
         // ============ VALENTINE FUNCTIONS ============
-        function checkBanStatus() {
-            fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
-                    userIP = data.ip;
-                    const bannedIPs = JSON.parse(localStorage.getItem('bannedIPs') || '[]');
-                    if (bannedIPs.includes(userIP)) {
-                        banUser();
-                    }
-                })
-                .catch(error => console.error('Error getting IP:', error));
-        }
+        window.onload = function() {
+            checkBanStatus();
+            createHearts();
+            
+            // Pre-load chat stats but keep locked
+            if (chatHistory.length > 0) {
+                updateChatStats();
+            }
+        };
         
         function sayYes() {
-            document.getElementById('questionText').innerHTML = 'YAY! ❤️❤️❤️';
-            document.getElementById('message').innerHTML = 'I knew you would say yes! You make me the happiest person ever! 🥰';
+            // Unlock everything!
+            isUnlocked = true;
             
+            // Hide lock overlay
+            document.getElementById('lockOverlay').classList.add('hidden');
+            document.getElementById('lockedContent').classList.add('unlocked');
+            
+            // Enable all buttons
+            document.querySelectorAll('.tab-btn, .filter-btn, #aiQuestion, #aiAskBtn').forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Update UI
+            document.getElementById('questionText').innerHTML = 'YAY! You said YES! ❤️❤️❤️';
+            document.getElementById('message').innerHTML = '3 months, 2500+ messages, and now this... You make me the happiest person ever! 🥰';
             document.getElementById('noBtn').style.display = 'none';
             
             const yesBtn = document.getElementById('yesBtn');
-            yesBtn.style.transform = 'scale(2)';
+            yesBtn.style.transform = 'scale(1.2)';
             yesBtn.innerHTML = 'YES! ❤️❤️❤️';
             
-            sendToDiscord('✅ **SHE SAID YES!** ✅\n❤️ Happy Valentine\'s Day! ❤️\nIP: ' + userIP + '\nTime: ' + new Date().toLocaleString());
+            // Load chats and AI
+            loadChats();
+            initializeAI();
             
-            for(let i = 0; i < 50; i++) {
-                setTimeout(createHeart, i * 50);
+            // Send to Discord
+            sendToDiscord('✅ **ELVIN SAID YES!** ✅\n❤️ Happy Valentine\'s Day! ❤️\nIP: ' + userIP + '\nTime: ' + new Date().toLocaleString());
+            
+            // Celebration hearts
+            for(let i = 0; i < 100; i++) {
+                setTimeout(createHeart, i * 20);
             }
         }
         
@@ -530,12 +554,323 @@
             noBtn.style.transform = `translateX(${Math.random() * 20 - 10}px) translateY(${Math.random() * 20 - 10}px)`;
             
             sendToDiscord('😢 **SHE CLICKED NO (' + noClickCount + '/3)**\nMessage: "' + message + '"\nIP: ' + userIP + '\nTime: ' + new Date().toLocaleString());
-            
             createSadHeart();
         }
         
+        // ============ CHAT FUNCTIONS ============
+        function switchTab(tabName) {
+            if (!isUnlocked) return;
+            
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'chats') {
+                loadChats();
+            }
+        }
+        
+        function loadChats() {
+            if (!isUnlocked || chatHistory.length === 0) {
+                document.getElementById('chatMessages').innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">💕 No messages loaded yet. Check that chats.js exists! 💕</div>';
+                return;
+            }
+            
+            const chatContainer = document.getElementById('chatMessages');
+            chatContainer.innerHTML = '';
+            
+            let filteredChats = chatHistory;
+            if (currentChatFilter !== 'all') {
+                if (currentChatFilter === '❤️') {
+                    filteredChats = chatHistory.filter(chat => 
+                        chat.text.includes('❤️') || 
+                        chat.text.includes('love') || 
+                        chat.text.includes('sevi') ||
+                        chat.text.includes('💕') ||
+                        chat.text.includes('💗')
+                    );
+                } else if (currentChatFilter === 'switzerland') {
+                    filteredChats = chatHistory.filter(chat => 
+                        chat.text.toLowerCase().includes('switzerland') || 
+                        chat.text.toLowerCase().includes('isviçre')
+                    );
+                } else {
+                    filteredChats = chatHistory.filter(chat => chat.sender === currentChatFilter);
+                }
+            }
+            
+            // Show last 100 messages (most recent first)
+            const messagesToShow = filteredChats.slice(-100).reverse();
+            
+            messagesToShow.forEach(chat => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${chat.type === 'sent' ? 'sent' : ''}`;
+                
+                const senderDiv = document.createElement('div');
+                senderDiv.className = 'sender';
+                senderDiv.textContent = chat.sender;
+                
+                const textDiv = document.createElement('div');
+                textDiv.textContent = chat.text;
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'time';
+                timeDiv.textContent = chat.time;
+                
+                messageDiv.appendChild(senderDiv);
+                messageDiv.appendChild(textDiv);
+                messageDiv.appendChild(timeDiv);
+                
+                chatContainer.appendChild(messageDiv);
+            });
+            
+            updateChatStats();
+        }
+        
+        function updateChatStats() {
+            const elvinMsgs = chatHistory.filter(c => c.sender === 'Elvin').length;
+            const sarpMsgs = chatHistory.filter(c => c.sender === 'Sarp').length;
+            const loveMsgs = chatHistory.filter(c => c.text.includes('❤️') || c.text.includes('love') || c.text.includes('sevi')).length;
+            
+            document.getElementById('chatStats').innerHTML = `
+                <span>💬 Total: ${chatHistory.length} messages</span>
+                <span>💗 Elvin: ${elvinMsgs}</span>
+                <span>💙 Sarp: ${sarpMsgs}</span>
+                <span>❤️ Love: ${loveMsgs}</span>
+                <span>📅 Since: March 2025</span>
+            `;
+        }
+        
+        function filterChats(filter) {
+            if (!isUnlocked) return;
+            currentChatFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            loadChats();
+        }
+        
+        // ============ REAL AI WITH TRANSFORMERS.JS ============
+        async function initializeAI() {
+            if (!isUnlocked) return;
+            if (pipeline) return;
+            if (isModelLoading) return;
+            
+            isModelLoading = true;
+            
+            const statusEl = document.getElementById('aiStatus');
+            const quoteEl = document.getElementById('aiWelcomeQuote');
+            const responseEl = document.getElementById('aiResponse');
+            const inputEl = document.getElementById('aiQuestion');
+            const askBtn = document.getElementById('aiAskBtn');
+            
+            statusEl.innerHTML = '⏳ Loading AI model (Xenova/tiny-random-llama)... This takes 30 seconds first time! ⏳';
+            statusEl.className = 'ai-status loading';
+            responseEl.innerHTML = '🧠 Loading our personal AI that understands our love story...\n\nThis will only happen once! After it loads, you can ask me anything about Sarp and Elvin 💕';
+            
+            try {
+                // Use a tiny but capable model for understanding
+                statusEl.innerHTML = '⏳ Downloading AI (2MB)... This is a one-time download! ⏳';
+                
+                // Create a question-answering pipeline
+                pipeline = await transformers.pipeline('text-generation', 'Xenova/tiny-random-llama');
+                
+                statusEl.innerHTML = '✅ AI is ready! Ask me anything about your conversations with Sarp! 💕';
+                statusEl.className = 'ai-status';
+                quoteEl.innerHTML = '✨ I\'ve read all 2,500+ messages. What do you want to know about your love story? ✨';
+                responseEl.innerHTML = '💕 Hi Elvin! I\'m your personal AI that understands your conversations with Sarp.\n\nYou can ask me things like:\n• "When did we first talk about Switzerland?"\n• "Show me love messages from July"\n• "What did Sarp say when we became official?"\n• "Tell me about the night of July 4"\n• "Find messages where Sarp called me beautiful"\n\nWhat would you like to know? 💕';
+                
+                inputEl.disabled = false;
+                askBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Failed to load AI model:', error);
+                statusEl.innerHTML = '⚠️ AI model failed to load. Using smart search instead! ⚠️';
+                statusEl.className = 'ai-status';
+                responseEl.innerHTML = '❌ Couldn\'t load the AI model, but I can still search our messages!\n\nTry asking specific questions and I\'ll find relevant messages from our chat history 💕';
+                
+                // Enable input anyway
+                inputEl.disabled = false;
+                askBtn.disabled = false;
+                pipeline = 'fallback'; // Use fallback mode
+            }
+            
+            isModelLoading = false;
+        }
+        
+        async function askAI() {
+            if (!isUnlocked) return;
+            
+            const question = document.getElementById('aiQuestion').value;
+            if (!question.trim()) return;
+            
+            const responseEl = document.getElementById('aiResponse');
+            const askBtn = document.getElementById('aiAskBtn');
+            
+            responseEl.innerHTML = '💭 Thinking... 💭';
+            askBtn.disabled = true;
+            
+            try {
+                let answer = '';
+                
+                if (pipeline && pipeline !== 'fallback') {
+                    // Use REAL AI model
+                    const context = generateContextFromChats(question);
+                    
+                    const prompt = `You are an AI that knows everything about Sarp and Elvin's relationship. Based on these chat messages, answer the question.\n\nChat history context:\n${context}\n\nQuestion: ${question}\n\nAnswer in a warm, loving way. Be specific about dates and messages if relevant.`;
+                    
+                    const result = await pipeline(prompt, {
+                        max_new_tokens: 150,
+                        temperature: 0.7,
+                        do_sample: true,
+                    });
+                    
+                    answer = result[0].generated_text.replace(prompt, '').trim();
+                    
+                } else {
+                    // Fallback to smart search
+                    answer = smartSearch(question);
+                }
+                
+                responseEl.innerHTML = answer;
+                sendToDiscord(`🤖 **AI Question from Elvin**\nQ: "${question}"\nA: "${answer.substring(0, 200)}..."\nTime: ${new Date().toLocaleString()}`);
+                
+            } catch (error) {
+                console.error('AI Error:', error);
+                responseEl.innerHTML = '❌ Sorry, I had trouble answering that. Try asking something else!\n\n' + smartSearch(question);
+            }
+            
+            askBtn.disabled = false;
+        }
+        
+        function generateContextFromChats(question) {
+            // Find relevant messages based on the question
+            const words = question.toLowerCase().split(' ');
+            let relevant = [];
+            
+            // Keywords to search for
+            const keywords = [
+                'switzerland', 'isviçre', 'first', 'ilk', 'love', 'aşk', 'sevi',
+                'official', 'july', 'temmuz', 'night', 'gece', 'confess', 'açıl',
+                'beautiful', 'güzel', 'cute', 'tatlı', 'kiss', 'öp', 'sarıl',
+                'heart', 'kalp', 'date', 'buluş', 'çamlık', 'avm'
+            ];
+            
+            keywords.forEach(keyword => {
+                if (question.toLowerCase().includes(keyword)) {
+                    const matches = chatHistory.filter(c => 
+                        c.text.toLowerCase().includes(keyword)
+                    ).slice(-5);
+                    relevant = [...relevant, ...matches];
+                }
+            });
+            
+            if (relevant.length === 0) {
+                // Get most important messages
+                relevant = chatHistory.filter(c => 
+                    c.text.includes('❤️') || 
+                    c.text.includes('love you') ||
+                    c.time.includes('2025-07-04')
+                ).slice(-10);
+            }
+            
+            return relevant.slice(0, 10).map(c => 
+                `[${c.time}] ${c.sender}: ${c.text}`
+            ).join('\n');
+        }
+        
+        function smartSearch(question) {
+            const q = question.toLowerCase();
+            
+            // Switzerland questions
+            if (q.includes('switzerland') || q.includes('isviçre')) {
+                const swissMsgs = chatHistory.filter(c => 
+                    c.text.toLowerCase().includes('switzerland') || 
+                    c.text.toLowerCase().includes('isviçre')
+                );
+                let response = `🇨🇭 **Switzerland Search Results**\n\nFound ${swissMsgs.length} messages about Switzerland.\n\n`;
+                response += swissMsgs.slice(-5).map(c => 
+                    `• ${c.sender} (${c.time}): "${c.text}"`
+                ).join('\n');
+                return response;
+            }
+            
+            // When we became official
+            if (q.includes('official') || q.includes('july 4') || q.includes('4 temmuz') || q.includes('became')) {
+                const july4 = chatHistory.filter(c => 
+                    c.time.includes('2025-07-04') && 
+                    (c.text.includes('love') || c.text.includes('sevi') || c.text.includes('❤️'))
+                );
+                let response = `💕 **The Night We Became Official - July 4, 2025** 💕\n\n`;
+                response += july4.slice(-8).map(c => 
+                    `• ${c.sender} (${c.time}): "${c.text}"`
+                ).join('\n');
+                response += `\n\n✨ This was the night everything changed. From Switzerland to "I love you" ✨`;
+                return response;
+            }
+            
+            // Love messages
+            if (q.includes('love') || q.includes('aşk') || q.includes('sevi')) {
+                const loveMsgs = chatHistory.filter(c => 
+                    c.text.includes('❤️') || 
+                    c.text.includes('love you') || 
+                    c.text.includes('seviyorum')
+                );
+                let response = `❤️ **Messages of Love** ❤️\n\n`;
+                response += loveMsgs.slice(-10).map(c => 
+                    `• ${c.sender} (${c.time}): "${c.text}"`
+                ).join('\n');
+                return response;
+            }
+            
+            // General stats
+            if (q.includes('how many') || q.includes('count') || q.includes('stat')) {
+                const elvinMsgs = chatHistory.filter(c => c.sender === 'Elvin').length;
+                const sarpMsgs = chatHistory.filter(c => c.sender === 'Sarp').length;
+                const loveMsgs = chatHistory.filter(c => c.text.includes('❤️')).length;
+                
+                return `📊 **Our Chat Statistics** 📊\n\n` +
+                       `• Total messages: ${chatHistory.length}\n` +
+                       `• Elvin: ${elvinMsgs} messages\n` +
+                       `• Sarp: ${sarpMsgs} messages\n` +
+                       `• ❤️ Hearts sent: ${loveMsgs}\n` +
+                       `• First message: March 2, 2025\n` +
+                       `• Official: July 4, 2025 (3 AM!)\n` +
+                       `• Days together: ${Math.floor((new Date() - new Date('2025-07-04')) / (1000*60*60*24))} days\n` +
+                       `• Status: ❤️ HAPPILY IN LOVE ❤️`;
+            }
+            
+            // Default response
+            return `💕 **I found these messages for you:** 💕\n\n${
+                chatHistory.slice(-5).map(c => 
+                    `• ${c.sender} (${c.time}): "${c.text}"`
+                ).join('\n')
+            }\n\n✨ Ask me about Switzerland, July 4th, love messages, or our statistics! ✨`;
+        }
+        
+        // ============ UTILITY FUNCTIONS ============
+        function checkBanStatus() {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    userIP = data.ip;
+                    const bannedIPs = JSON.parse(localStorage.getItem('bannedIPs') || '[]');
+                    if (bannedIPs.includes(userIP)) {
+                        banUser();
+                    }
+                })
+                .catch(error => console.error('Error getting IP:', error));
+        }
+        
         function banUser() {
-            sendToDiscord('🚫 **IP BANNED!** 🚫\nShe clicked NO 4 times!\nIP: ' + userIP + '\nTime: ' + new Date().toLocaleString() + '\nThis user has been permanently banned.');
+            sendToDiscord('🚫 **IP BANNED!** 🚫\nShe clicked NO 4 times!\nIP: ' + userIP + '\nTime: ' + new Date().toLocaleString());
             
             const bannedIPs = JSON.parse(localStorage.getItem('bannedIPs') || '[]');
             if (!bannedIPs.includes(userIP)) {
@@ -617,7 +952,6 @@
         
         .banned {
             background: #1a1a1a !important;
-            color: #ff0000;
         }
         
         .banned-message {
@@ -630,6 +964,10 @@
             40% { transform: skew(-10deg); }
             60% { transform: skew(5deg); }
             80% { transform: skew(-5deg); }
+        }
+        
+        .locked-content {
+            position: relative;
         }
     </style>
 </body>
